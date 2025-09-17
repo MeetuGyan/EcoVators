@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoVators - Gamified Environmental Education</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/umd/lucide.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One:wght@400&family=Nunito:wght@300;400;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .game-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+        
+        .eco-gradient {
+            background: linear-gradient(135deg, #4ade80 0%, #16a34a 100%);
+        }
+        
+        .xp-gradient {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        }
+        
+        .level-badge {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        .bounce-in {
+            animation: bounceIn 0.6s ease-out;
+        }
+        
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .slide-up {
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .glow-effect {
+            box-shadow: 0 0 20px rgba(74, 222, 128, 0.6);
+        }
+        
+        .eco-leaf {
+            color: #16a34a;
+            filter: drop-shadow(0 0 8px rgba(22, 163, 74, 0.3));
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        
+        // Translations
+        const translations = {
+            en: {
+                welcome: "Welcome to EcoVators!",
+                studentDashboard: "Student Dashboard",
+                teacherDashboard: "Teacher Dashboard",
+                profile: "Profile",
+                todaysTask: "Today's Eco-Task",
+                pendingTasks: "Pending Tasks",
+                challenges: "Challenges",
+                learning: "Learning",
+                badges: "Badges",
+                leaderboard: "Leaderboard",
+                reports: "Reports",
+                plantTree: "Plant a tree today and earn +50 XP and +20 carbon credits",
+                startNow: "Start Now",
+                uploadProof: "Upload Proof",
+                pending: "Pending",
+                approved: "Approved",
+                rejected: "Rejected",
+                xpPoints: "XP Points",
+                carbonCredits: "Carbon Credits",
+                level: "Level",
+                grade: "Grade",
+                school: "School",
+                waterConservation: "Water Conservation Challenge",
+                plasticReduction: "Plastic Reduction Challenge",
+                energySaving: "Energy Saving Challenge",
+                quizBattle: "Quiz Battle",
+                wasteSort: "Waste Sorting Game",
+                playNow: "Play Now",
+                verifyProofs: "Verify Proofs",
+                createChallenge: "Create Challenge",
+                analytics: "Analytics",
+                totalStudents: "Total Students",
+                co2Saved: "CO₂ Saved This Month",
+                pendingProofs: "Pending Proofs",
+                approve: "Approve",
+                reject: "Reject",
+                bulkApprove: "Bulk Approve"
+            },
+            hi: {
+                welcome: "EcoVators में आपका स्वागत है!",
+                studentDashboard: "छात्र डैशबोर्ड",
+                teacherDashboard: "शिक्षक डैशबोर्ड",
+                profile: "प्रोफाइल",
+                todaysTask: "आज का इको-कार्य",
+                pendingTasks: "लंबित कार्य",
+                challenges: "चुनौतियां",
+                learning: "सीखना",
+                badges: "बैज",
+                leaderboard: "लीडरबोर्ड",
+                reports: "रिपोर्ट",
+                plantTree: "आज एक पेड़ लगाएं और +50 XP और +20 कार्बन क्रेडिट कमाएं",
+                startNow: "अभी शुरू करें",
+                uploadProof: "प्रमाण अपलोड करें",
+                pending: "लंबित",
+                approved: "अनुमोदित",
+                rejected: "अस्वीकृत",
+                xpPoints: "XP अंक",
+                carbonCredits: "कार्बन क्रेडिट",
+                level: "स्तर",
+                grade: "कक्षा",
+                school: "स्कूल",
+                waterConservation: "जल संरक्षण चुनौती",
+                plasticReduction: "प्लास्टिक कमी चुनौती",
+                energySaving: "ऊर्जा बचत चुनौती",
+                quizBattle: "क्विज़ युद्ध",
+                wasteSort: "कचरा छांटना खेल",
+                playNow: "अभी खेलें",
+                verifyProofs: "प्रमाण सत्यापित करें",
+                createChallenge: "चुनौती बनाएं",
+                analytics: "विश्लेषण",
+                totalStudents: "कुल छात्र",
+                co2Saved: "इस महीने CO₂ बचत",
+                pendingProofs: "लंबित प्रमाण",
+                approve: "अनुमोदित करें",
+                reject: "अस्वीकार करें",
+                bulkApprove: "सामूहिक अनुमोदन"
+            },
+            pa: {
+                welcome: "EcoVators ਵਿੱਚ ਤੁਹਾਡਾ ਸੁਆਗਤ ਹੈ!",
+                studentDashboard: "ਵਿਦਿਆਰਥੀ ਡੈਸ਼ਬੋਰਡ",
+                teacherDashboard: "ਅਧਿਆਪਕ ਡੈਸ਼ਬੋਰਡ",
+                profile: "ਪ੍ਰੋਫਾਈਲ",
+                todaysTask: "ਅੱਜ ਦਾ ਈਕੋ-ਕੰਮ",
+                pendingTasks: "ਬਕਾਇਆ ਕੰਮ",
+                challenges: "ਚੁਣੌਤੀਆਂ",
+                learning: "ਸਿੱਖਣਾ",
+                badges: "ਬੈਜਾਂ",
+                leaderboard: "ਲੀਡਰਬੋਰਡ",
+                reports: "ਰਿਪੋਰਟਾਂ",
+                plantTree: "ਅੱਜ ਇੱਕ ਰੁੱਖ ਲਗਾਓ ਅਤੇ +50 XP ਅਤੇ +20 ਕਾਰਬਨ ਕ੍ਰੈਡਿਟ ਕਮਾਓ",
+                startNow: "ਹੁਣੇ ਸ਼ੁਰੂ ਕਰੋ",
+                uploadProof: "ਸਬੂਤ ਅਪਲੋਡ ਕਰੋ",
+                pending: "ਬਕਾਇਆ",
+                approved: "ਮਨਜ਼ੂਰ",
+                rejected: "ਰੱਦ",
+                xpPoints: "XP ਅੰਕ",
+                carbonCredits: "ਕਾਰਬਨ ਕ੍ਰੈਡਿਟ",
+                level: "ਪੱਧਰ",
+                grade: "ਕਲਾਸ",
+                school: "ਸਕੂਲ"
+            }
+        };
+        
+        // Mock Data
+        const mockStudentData = {
+            name: "Arjun Patel",
+            grade: "Class 9",
+            school: "Green Valley High School",
+            avatar: "🌟",
+            level: 7,
+            xp: 1350,
+            carbonCredits: 285,
+            totalXpForNextLevel: 500,
+            currentLevelXp: 350,
+            streak: 12,
+            badges: [
+                { id: 1, name: "Tree Guardian", icon: "🌳", earned: true },
+                { id: 2, name: "Plastic-Free Hero", icon: "♻️", earned: true },
+                { id: 3, name: "Water Warrior", icon: "💧", earned: false },
+                { id: 4, name: "Energy Saver", icon: "⚡", earned: true }
+            ],
+            ecoImpact: {
+                treesPlanted: 23,
+                wasteReduced: 12.5,
+                waterSaved: 450,
+                co2Offset: 185
+            }
+        };
+        
+        const mockChallenges = [
+            {
+                id: 1,
+                title: "Plant a Tree Challenge",
+                description: "Plant a tree in your neighborhood and help combat climate change",
+                xpReward: 50,
+                carbonCredits: 20,
+                status: "active",
+                proofStatus: "none",
+                image: "🌳"
+            },
+            {
+                id: 2,
+                title: "Water Conservation",
+                description: "Save 50 liters of water by fixing leaks or taking shorter showers",
+                xpReward: 30,
+                carbonCredits: 12,
+                status: "active",
+                proofStatus: "pending",
+                image: "💧"
+            },
+            {
+                id: 3,
+                title: "Plastic Reduction",
+                description: "Avoid using single-use plastics for one week",
+                xpReward: 40,
+                carbonCredits: 15,
+                status: "completed",
+                proofStatus: "approved",
+                image: "♻️"
+            }
+        ];
+        
+        const mockLeaderboard = [
+            { rank: 1, name: "Priya Sharma", xp: 2450, avatar: "🏆" },
+            { rank: 2, name: "Arjun Patel", xp: 1350, avatar: "🌟" },
+            { rank: 3, name: "Raj Kumar", xp: 1280, avatar: "⭐" },
+            { rank: 4, name: "Anita Singh", xp: 1150, avatar: "🎯" }
+        ];
+        
+        // Components
+        const LanguageSelector = ({ currentLang, onLanguageChange, t }) => {
+            const languages = [
+                { code: 'en', name: 'English', flag: '🇺🇸' },
+                { code: 'hi', name: 'हिंदी', flag: '🇮🇳' },
+                { code: 'pa', name: 'ਪੰਜਾਬੀ', flag: '🇮🇳' }
+            ];
+            
+            return (
+                <div className="relative">
+                    <select 
+                        value={currentLang} 
+                        onChange={(e) => onLanguageChange(e.target.value)}
+                        className="bg-white/90 border-2 border-green-300 rounded-lg px-3 py-2 text-sm font-semibold text-gray-700 hover:border-green-500 transition-colors"
+                    >
+                        {languages.map(lang => (
+                            <option key={lang.code} value={lang.code}>
+                                {lang.flag} {lang.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            );
+        };
+        
+        const ProfileCard = ({ student, t }) => (
+            <div className="game-card rounded-2xl p-6 bounce-in">
+                <div className="flex items-center space-x-4">
+                    <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center text-2xl">
+                        {student.avatar}
+                    </div>
+                    <div className="flex-1">
+                        <h2 className="text-xl font-bold text-gray-800">{student.name}</h2>
+                        <p className="text-gray-600">{student.grade} • {student.school}</p>
+                        <div className="flex items-center space-x-4 mt-2">
+                            <span className="level-badge text-white px-3 py-1 rounded-full text-sm font-bold">
+                                {t.level} {student.level}
+                            </span>
+                            <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-sm font-bold">
+                                🔥 {student.streak} days
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="mt-6 grid grid-cols-2 gap-4">
+                    <div className="xp-gradient text-white p-4 rounded-xl">
+                        <div className="text-2xl font-bold">{student.xp}</div>
+                        <div className="text-sm opacity-90">{t.xpPoints}</div>
+                        <div className="w-full bg-white/30 rounded-full h-2 mt-2">
+                            <div 
+                                className="bg-white h-2 rounded-full transition-all duration-500"
+                                style={{width: `${(student.currentLevelXp / student.totalXpForNextLevel) * 100}%`}}
+                            ></div>
+                        </div>
+                    </div>
+                    <div className="eco-gradient text-white p-4 rounded-xl">
+                        <div className="text-2xl font-bold">{student.carbonCredits}</div>
+                        <div className="text-sm opacity-90">{t.carbonCredits}</div>
+                        <div className="text-xs mt-1 opacity-75">
+                            {student.currentLevelXp}/{student.totalXpForNextLevel} to next level
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+        
+        const TodaysTask = ({ t, onTaskStart }) => (
+            <div className="game-card rounded-2xl p-6 slide-up">
+                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                    <span className="eco-leaf text-2xl mr-2">🌱</span>
+                    {t.todaysTask}
+                </h3>
+                <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-xl border-l-4 border-green-500">
+                    <p className="text-gray-700 mb-4">{t.plantTree}</p>
+                    <button 
+                        onClick={onTaskStart}
+                        className="eco-gradient text-white px-6 py-3 rounded-lg font-bold hover:scale-105 transform transition-all glow-effect pulse-animation"
+                    >
+                        {t.startNow} ✨
+                    </button>
+                </div>
+            </div>
+        );
+        
+        const ChallengeCard = ({ challenge, t, onUploadProof }) => {
+            const getStatusColor = (status) => {
+                switch(status) {
+                    case 'pending': return 'bg-yellow-100 text-yellow-700 border-yellow-300';
+                    case 'approved': return 'bg-green-100 text-green-700 border-green-300';
+                    case 'rejected': return 'bg-red-100 text-red-700 border-red-300';
+                    default: return 'bg-gray-100 text-gray-700 border-gray-300';
+                }
+            };
+            
+            return (
+                <div className="game-card rounded-xl p-5 hover:scale-102 transform transition-all">
+                    <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center">
+                            <span className="text-3xl mr-3">{challenge.image}</span>
+                            <h4 className="font-bold text-gray-800">{challenge.title}</h4>
+                        </div>
+                        {challenge.proofStatus !== 'none' && (
+                            <span className={`px-2 py-1 rounded-lg text-xs font-bold border ${getStatusColor(challenge.proofStatus)}`}>
+                                {t[challenge.proofStatus]}
+                            </span>
+                        )}
+                    </div>
+                    <p className="text-gray-600 text-sm mb-4">{challenge.description}</p>
+                    <div className="flex items-center justify-between">
+                        <div className="flex space-x-3">
+                            <span className="bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs font-bold">
+                                +{challenge.xpReward} XP
+                            </span>
+                            <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold">
+                                +{challenge.carbonCredits} Credits
+                            </span>
+                        </div>
+                        {challenge.proofStatus === 'none' && (
+                            <button 
+                                onClick={() => onUploadProof(challenge.id)}
+                                className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-600 transition-colors"
+                            >
+                                {t.uploadProof}
+                            </button>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+        
+        const BadgeGrid = ({ badges, t }) => (
+            <div className="game-card rounded-2xl p-6">
+                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                    <span className="mr-2">🏆</span>
+                    {t.badges}
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                    {badges.map(badge => (
+                        <div 
+                            key={badge.id} 
+                            className={`p-4 rounded-xl text-center transition-all ${
+                                badge.earned 
+                                    ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-white shadow-lg' 
+                                    : 'bg-gray-100 text-gray-400'
+                            }`}
+                        >
+                            <div className="text-2xl mb-2">{badge.icon}</div>
+                            <div className="text-sm font-bold">{badge.name}</div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+        
+        const Leaderboard = ({ leaderboard, t, currentUser }) => (
+            <div className="game-card rounded-2xl p-6">
+                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                    <span className="mr-2">🏆</span>
+                    {t.leaderboard}
+                </h3>
+                <div className="space-y-3">
+                    {leaderboard.map(user => (
+                        <div 
+                            key={user.rank}
+                            className={`flex items-center justify-between p-3 rounded-lg transition-all ${
+                                user.name === currentUser ? 'bg-gradient-to-r from-blue-100 to-purple-100 border-2 border-blue-300' : 'bg-gray-50'
+                            }`}
+                        >
+                            <div className="flex items-center space-x-3">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                                    user.rank === 1 ? 'bg-yellow-400 text-white' :
+                                    user.rank === 2 ? 'bg-gray-300 text-white' :
+                                    user.rank === 3 ? 'bg-orange-400 text-white' : 'bg-blue-100 text-blue-600'
+                                }`}>
+                                    {user.rank}
+                                </div>
+                                <span className="text-xl">{user.avatar}</span>
+                                <span className="font-semibold text-gray-800">{user.name}</span>
+                            </div>
+                            <span className="font-bold text-orange-600">{user.xp} XP</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+        
+        const MiniGames = ({ t, onGamePlay }) => (
+            <div className="game-card rounded-2xl p-6">
+                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                    <span className="mr-2">🎮</span>
+                    Mini Games
+                </h3>
+                <div className="grid grid-cols-1 gap-4">
+                    <div className="bg-gradient-to-r from-purple-100 to-pink-100 p-4 rounded-xl">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h4 className="font-bold text-gray-800">{t.quizBattle || 'Quiz Battle'}</h4>
+                                <p className="text-sm text-gray-600">Multiplayer eco-quiz</p>
+                                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded mt-1 inline-block">
+                                    +25 XP for winning
+                                </span>
+                            </div>
+                            <button 
+                                onClick={() => onGamePlay('quiz')}
+                                className="bg-purple-500 text-white px-4 py-2 rounded-lg font-bold hover:bg-purple-600 transition-colors"
+                            >
+                                {t.playNow || 'Play Now'}
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div className="bg-gradient-to-r from-blue-100 to-green-100 p-4 rounded-xl">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h4 className="font-bold text-gray-800">{t.wasteSort || 'Waste Sorting'}</h4>
+                                <p className="text-sm text-gray-600">Sort waste into correct bins</p>
+                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded mt-1 inline-block">
+                                    +15 XP
+                                </span>
+                            </div>
+                            <button 
+                                onClick={() => onGamePlay('waste')}
+                                className="bg-blue-500 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-600 transition-colors"
+                            >
+                                {t.playNow || 'Play Now'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+        
+        const TeacherDashboard = ({ t, onSwitchToStudent }) => {
+            const [pendingProofs, setPendingProofs] = useState([
+                { id: 1, studentName: "Arjun Patel", challenge: "Tree Planting", image: "tree_proof.jpg", status: "pending" },
+                { id: 2, studentName: "Priya Sharma", challenge: "Water Conservation", image: "water_proof.jpg", status: "pending" },
+                { id: 3, studentName: "Raj Kumar", challenge: "Plastic Reduction", image: "plastic_proof.jpg", status: "pending" }
+            ]);
+            
+            const handleApprove = (proofId) => {
+                setPendingProofs(prev => prev.map(proof => 
+                    proof.id === proofId ? {...proof, status: 'approved'} : proof
+                ));
+            };
+            
+            const handleReject = (proofId) => {
+                setPendingProofs(prev => prev.map(proof => 
+                    proof.id === proofId ? {...proof, status: 'rejected'} : proof
+                ));
+            };
+            
+            return (
+                <div className="min-h-screen p-6">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="flex justify-between items-center mb-8">
+                            <h1 className="text-4xl font-bold text-white" style={{fontFamily: 'Fredoka One'}}>
+                                🍃 EcoVators Teacher Hub
+                            </h1>
+                            <div className="flex items-center space-x-4">
+                                <button 
+                                    onClick={onSwitchToStudent}
+                                    className="bg-white/90 text-gray-700 px-4 py-2 rounded-lg font-bold hover:bg-white transition-colors"
+                                >
+                                    Switch to Student View
+                                </button>
+                            </div>
+                        </div>
+                        
+                        {/* Overview Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                            <div className="game-card rounded-2xl p-6 text-center">
+                                <div className="text-3xl font-bold text-blue-600">1,247</div>
+                                <div className="text-gray-600 font-semibold">{t.totalStudents || 'Total Students'}</div>
+                                <div className="text-sm text-green-600 mt-1">↗ +23 this week</div>
+                            </div>
+                            <div className="game-card rounded-2xl p-6 text-center">
+                                <div className="text-3xl font-bold text-green-600">2.5 tons</div>
+                                <div className="text-gray-600 font-semibold">{t.co2Saved || 'CO₂ Saved This Month'}</div>
+                                <div className="text-sm text-green-600 mt-1">🌱 Equivalent to 125 trees</div>
+                            </div>
+                            <div className="game-card rounded-2xl p-6 text-center">
+                                <div className="text-3xl font-bold text-orange-600">{pendingProofs.filter(p => p.status === 'pending').length}</div>
+                                <div className="text-gray-600 font-semibold">{t.pendingProofs || 'Pending Proofs'}</div>
+                                <div className="text-sm text-orange-600 mt-1">⏰ Awaiting review</div>
+                            </div>
+                            <div className="game-card rounded-2xl p-6 text-center">
+                                <div className="text-3xl font-bold text-purple-600">156</div>
+                                <div className="text-gray-600 font-semibold">Challenges Created</div>
+                                <div className="text-sm text-purple-600 mt-1">🎯 This semester</div>
+                            </div>
+                        </div>
+                        
+                        {/* Proof Verification */}
+                        <div className="game-card rounded-2xl p-6 mb-8">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-xl font-bold text-gray-800 flex items-center">
+                                    <span className="mr-2">✅</span>
+                                    {t.verifyProofs || 'Verify Student Proofs'}
+                                </h3>
+                                <button className="bg-green-500 text-white px-4 py-2 rounded-lg font-bold hover:bg-green-600 transition-colors">
+                                    {t.bulkApprove || 'Bulk Approve'}
+                                </button>
+                            </div>
+                            <div className="space-y-4">
+                                {pendingProofs.map(proof => (
+                                    <div key={proof.id} className="bg-gray-50 p-4 rounded-xl flex items-center justify-between">
+                                        <div className="flex items-center space-x-4">
+                                            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                                📸
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-gray-800">{proof.studentName}</h4>
+                                                <p className="text-gray-600 text-sm">{proof.challenge}</p>
+                                                <span className="text-xs text-blue-600">{proof.image}</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex space-x-2">
+                                            {proof.status === 'pending' ? (
+                                                <>
+                                                    <button 
+                                                        onClick={() => handleApprove(proof.id)}
+                                                        className="bg-green-500 text-white px-4 py-2 rounded-lg font-bold hover:bg-green-600 transition-colors"
+                                                    >
+                                                        {t.approve || 'Approve'}
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleReject(proof.id)}
+                                                        className="bg-red-500 text-white px-4 py-2 rounded-lg font-bold hover:bg-red-600 transition-colors"
+                                                    >
+                                                        {t.reject || 'Reject'}
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <span className={`px-4 py-2 rounded-lg font-bold ${
+                                                    proof.status === 'approved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                                }`}>
+                                                    {proof.status === 'approved' ? '✅ Approved' : '❌ Rejected'}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        
+                        {/* Analytics Charts */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="game-card rounded-2xl p-6">
+                                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                                    <span className="mr-2">📊</span>
+                                    {t.analytics || 'Analytics'}
+                                </h3>
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-gray-600">Trees Planted</span>
+                                        <span className="font-bold text-green-600">1,234</span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-2">
+                                        <div className="bg-green-500 h-2 rounded-full" style={{width: '75%'}}></div>
+                                    </div>
+                                    
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-gray-600">Waste Reduced</span>
+                                        <span className="font-bold text-blue-600">567 kg</span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-2">
+                                        <div className="bg-blue-500 h-2 rounded-full" style={{width: '60%'}}></div>
+                                    </div>
+                                    
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-gray-600">Water Saved</span>
+                                        <span className="font-bold text-cyan-600">89,456 L</span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-2">
+                                        <div className="bg-cyan-500 h-2 rounded-full" style={{width: '90%'}}></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="game-card rounded-2xl p-6">
+                                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                                    <span className="mr-2">🏆</span>
+                                    Top Performing Students
+                                </h3>
+                                <div className="space-y-3">
+                                    {[
+                                        {name: "Priya Sharma", xp: 2450, impact: "25 trees planted"},
+                                        {name: "Arjun Patel", xp: 1350, impact: "150L water saved"},
+                                        {name: "Raj Kumar", xp: 1280, impact: "5kg plastic reduced"},
+                                        {name: "Anita Singh", xp: 1150, impact: "Energy saver champion"}
+                                    ].map((student, idx) => (
+                                        <div key={idx} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                                            <div>
+                                                <div className="font-semibold text-gray-800">{student.name}</div>
+                                                <div className="text-sm text-gray-600">{student.impact}</div>
+                                            </div>
+                                            <span className="font-bold text-orange-600">{student.xp} XP</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        
+        const QuizBattle = ({ onClose, t }) => {
+            const [currentQuestion, setCurrentQuestion] = useState(0);
+            const [score, setScore] = useState(0);
+            const [timeLeft, setTimeLeft] = useState(30);
+            const [gameStarted, setGameStarted] = useState(false);
+            const [gameEnded, setGameEnded] = useState(false);
+            
+            const questions = [
+                {
+                    question: "How many trees does it take to offset 1 ton of CO₂?",
+                    options: ["15-20 trees", "40-50 trees", "100-150 trees", "200-250 trees"],
+                    correct: 1
+                },
+                {
+                    question: "Which material takes the longest to decompose?",
+                    options: ["Paper", "Plastic bottles", "Aluminum cans", "Glass bottles"],
+                    correct: 3
+                },
+                {
+                    question: "What percentage of Earth's water is fresh water?",
+                    options: ["5%", "3%", "10%", "1%"],
+                    correct: 1
+                }
+            ];
+            
+            useEffect(() => {
+                if (gameStarted && !gameEnded && timeLeft > 0) {
+                    const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+                    return () => clearTimeout(timer);
+                } else if (timeLeft === 0) {
+                    setGameEnded(true);
+                }
+            }, [timeLeft, gameStarted, gameEnded]);
+            
+            const handleAnswer = (answerIndex) => {
+                if (answerIndex === questions[currentQuestion].correct) {
+                    setScore(score + 100);
+                }
+                if (currentQuestion < questions.length - 1) {
+                    setCurrentQuestion(currentQuestion + 1);
+                    setTimeLeft(30);
+                } else {
+                    setGameEnded(true);
+                }
+            };
+            
+            if (!gameStarted) {
+                return (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                        <div className="game-card rounded-2xl p-8 max-w-md w-full mx-4">
+                            <h2 className="text-2xl font-bold text-center mb-4">🎯 Eco Quiz Battle</h2>
+                            <p className="text-gray-600 text-center mb-6">
+                                Test your environmental knowledge! Answer questions quickly to earn more points.
+                            </p>
+                            <div className="text-center space-y-4">
+                                <button 
+                                    onClick={() => setGameStarted(true)}
+                                    className="bg-green-500 text-white px-8 py-3 rounded-lg font-bold hover:bg-green-600 transition-colors"
+                                >
+                                    Start Game 🚀
+                                </button>
+                                <button 
+                                    onClick={onClose}
+                                    className="block mx-auto text-gray-500 hover:text-gray-700"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+            
+            if (gameEnded) {
+                const xpEarned = Math.floor(score / 10);
+                return (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                        <div className="game-card rounded-2xl p-8 max-w-md w-full mx-4 text-center">
+                            <div className="text-6xl mb-4">🏆</div>
+                            <h2 className="text-2xl font-bold mb-2">Game Complete!</h2>
+                            <div className="text-4xl font-bold text-green-600 mb-2">{score}</div>
+                            <p className="text-gray-600 mb-4">Points Scored</p>
+                            <div className="bg-orange-100 text-orange-700 px-4 py-2 rounded-lg mb-6">
+                                <strong>+{xpEarned} XP Earned!</strong>
+                            </div>
+                            <button 
+                                onClick={onClose}
+                                className="bg-blue-500 text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-600 transition-colors"
+                            >
+                                Continue
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+            
+            return (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="game-card rounded-2xl p-8 max-w-2xl w-full mx-4">
+                        <div className="flex justify-between items-center mb-6">
+                            <div className="text-sm font-bold">
+                                Question {currentQuestion + 1} of {questions.length}
+                            </div>
+                            <div className="flex items-center space-x-4">
+                                <div className="bg-orange-100 text-orange-700 px-3 py-1 rounded-lg font-bold">
+                                    ⏰ {timeLeft}s
+                                </div>
+                                <div className="bg-green-100 text-green-700 px-3 py-1 rounded-lg font-bold">
+                                    🎯 {score}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h3 className="text-xl font-bold text-gray-800 mb-6">
+                            {questions[currentQuestion].question}
+                        </h3>
+                        
+                        <div className="grid grid-cols-1 gap-3">
+                            {questions[currentQuestion].options.map((option, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => handleAnswer(index)}
+                                    className="bg-gray-50 hover:bg-blue-50 border-2 border-gray-200 hover:border-blue-300 p-4 rounded-lg text-left font-semibold transition-all"
+                                >
+                                    {String.fromCharCode(65 + index)}. {option}
+                                </button>
+                            ))}
+                        </div>
+                        
+                        <button 
+                            onClick={onClose}
+                            className="mt-6 text-gray-500 hover:text-gray-700 font-semibold"
+                        >
+                            Exit Game
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+        
+        const WasteSortingGame = ({ onClose, t }) => {
+            const [score, setScore] = useState(0);
+            const [currentItem, setCurrentItem] = useState(null);
+            const [gameEnded, setGameEnded] = useState(false);
+            const [itemsProcessed, setItemsProcessed] = useState(0);
+            const [feedback, setFeedback] = useState('');
+            
+            const wasteItems = [
+                { name: "Plastic Bottle", correct: "plastic", icon: "🍼" },
+                { name: "Banana Peel", correct: "organic", icon: "🍌" },
+                { name: "Newspaper", correct: "paper", icon: "📰" },
+                { name: "Glass Jar", correct: "glass", icon: "🫙" },
+                { name: "Apple Core", correct: "organic", icon: "🍎" },
+                { name: "Aluminum Can", correct: "metal", icon: "🥤" },
+                { name: "Pizza Box", correct: "paper", icon: "📦" },
+                { name: "Battery", correct: "hazardous", icon: "🔋" }
+            ];
+            
+            const bins = [
+                { type: "plastic", color: "bg-yellow-400", label: "Plastic", icon: "♻️" },
+                { type: "organic", color: "bg-green-400", label: "Organic", icon: "🌱" },
+                { type: "paper", color: "bg-blue-400", label: "Paper", icon: "📄" },
+                { type: "glass", color: "bg-purple-400", label: "Glass", icon: "🫙" },
+                { type: "metal", color: "bg-gray-400", label: "Metal", icon: "⚙️" },
+                { type: "hazardous", color: "bg-red-400", label: "Hazardous", icon: "⚠️" }
+            ];
+            
+            useEffect(() => {
+                if (!currentItem && itemsProcessed < 5) {
+                    const randomItem = wasteItems[Math.floor(Math.random() * wasteItems.length)];
+                    setCurrentItem(randomItem);
+                }
+                if (itemsProcessed >= 5) {
+                    setGameEnded(true);
+                }
+            }, [currentItem, itemsProcessed]);
+            
+            const handleSort = (binType) => {
+                if (currentItem && binType === currentItem.correct) {
+                    setScore(score + 20);
+                    setFeedback('✅ Correct! Great job!');
+                } else {
+                    setFeedback('❌ Wrong bin! Try to remember for next time.');
+                }
+                
+                setTimeout(() => {
+                    setCurrentItem(null);
+                    setItemsProcessed(itemsProcessed + 1);
+                    setFeedback('');
+                }, 1000);
+            };
+            
+            if (gameEnded) {
+                const xpEarned = score;
+                return (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                        <div className="game-card rounded-2xl p-8 max-w-md w-full mx-4 text-center">
+                            <div className="text-6xl mb-4">🌍</div>
+                            <h2 className="text-2xl font-bold mb-2">Waste Sorted!</h2>
+                            <div className="text-4xl font-bold text-green-600 mb-2">{score}</div>
+                            <p className="text-gray-600 mb-4">Points Scored</p>
+                            <div className="bg-orange-100 text-orange-700 px-4 py-2 rounded-lg mb-6">
+                                <strong>+{xpEarned} XP Earned!</strong>
+                            </div>
+                            <button 
+                                onClick={onClose}
+                                className="bg-blue-500 text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-600 transition-colors"
+                            >
+                                Continue
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+            
+            return (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="game-card rounded-2xl p-8 max-w-4xl w-full mx-4">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-bold">🗂️ Waste Sorting Challenge</h2>
+                            <div className="flex items-center space-x-4">
+                                <div className="bg-green-100 text-green-700 px-3 py-1 rounded-lg font-bold">
+                                    📊 {score} points
+                                </div>
+                                <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg font-bold">
+                                    {itemsProcessed}/5 items
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {feedback && (
+                            <div className={`text-center p-3 rounded-lg mb-4 font-bold ${
+                                feedback.includes('✅') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                            }`}>
+                                {feedback}
+                            </div>
+                        )}
+                        
+                        {currentItem && (
+                            <div className="text-center mb-8">
+                                <div className="text-6xl mb-4">{currentItem.icon}</div>
+                                <h3 className="text-xl font-bold text-gray-800">
+                                    Sort this: {currentItem.name}
+                                </h3>
+                                <p className="text-gray-600">Drag it to the correct bin!</p>
+                            </div>
+                        )}
+                        
+                        <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
+                            {bins.map(bin => (
+                                <button
+                                    key={bin.type}
+                                    onClick={() => handleSort(bin.type)}
+                                    className={`${bin.color} text-white p-4 rounded-xl hover:scale-105 transform transition-all`}
+                                    disabled={!currentItem}
+                                >
+                                    <div className="text-2xl mb-2">{bin.icon}</div>
+                                    <div className="text-sm font-bold">{bin.label}</div>
+                                </button>
+                            ))}
+                        </div>
+                        
+                        <button 
+                            onClick={onClose}
+                            className="mt-6 text-gray-500 hover:text-gray-700 font-semibold"
+                        >
+                            Exit Game
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+        
+        // Main App Component
+        const EcoVatorsApp = () => {
+            const [currentView, setCurrentView] = useState('student');
+            const [language, setLanguage] = useState('en');
+            const [studentData, setStudentData] = useState(mockStudentData);
+            const [showQuizGame, setShowQuizGame] = useState(false);
+            const [showWasteGame, setShowWasteGame] = useState(false);
+            const [showNotification, setShowNotification] = useState(false);
+            const [notificationMessage, setNotificationMessage] = useState('');
+            
+            const t = translations[language] || translations.en;
+            
+            const showNotificationMessage = (message, duration = 3000) => {
+                setNotificationMessage(message);
+                setShowNotification(true);
+                setTimeout(() => setShowNotification(false), duration);
+            };
+            
+            const handleTaskStart = () => {
+                showNotificationMessage('🌱 Task started! Upload your proof when complete.');
+            };
+            
+            const handleUploadProof = (challengeId) => {
+                showNotificationMessage('📸 Proof uploaded! Waiting for teacher verification.');
+            };
+            
+            const handleGamePlay = (gameType) => {
+                if (gameType === 'quiz') {
+                    setShowQuizGame(true);
+                } else if (gameType === 'waste') {
+                    setShowWasteGame(true);
+                }
+            };
+            
+            const updateXP = (xpGain) => {
+                setStudentData(prev => ({
+                    ...prev,
+                    xp: prev.xp + xpGain,
+                    currentLevelXp: (prev.currentLevelXp + xpGain) % prev.totalXpForNextLevel,
+                    level: prev.level + Math.floor((prev.currentLevelXp + xpGain) / prev.totalXpForNextLevel)
+                }));
+            };
+            
+            const handleQuizComplete = () => {
+                setShowQuizGame(false);
+                updateXP(25);
+                showNotificationMessage('🎉 Quiz completed! +25 XP earned!');
+            };
+            
+            const handleWasteGameComplete = () => {
+                setShowWasteGame(false);
+                updateXP(15);
+                showNotificationMessage('♻️ Waste sorted correctly! +15 XP earned!');
+            };
+            
+            return (
+                <div className="min-h-screen">
+                    {/* Notification */}
+                    {showNotification && (
+                        <div className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg slide-up">
+                            {notificationMessage}
+                        </div>
+                    )}
+                    
+                    {/* Games */}
+                    {showQuizGame && <QuizBattle onClose={handleQuizComplete} t={t} />}
+                    {showWasteGame && <WasteSortingGame onClose={handleWasteGameComplete} t={t} />}
+                    
+                    {currentView === 'student' ? (
+                        <div className="p-6">
+                            <div className="max-w-7xl mx-auto">
+                                {/* Header */}
+                                <div className="flex justify-between items-center mb-8">
+                                    <h1 className="text-4xl font-bold text-white" style={{fontFamily: 'Fredoka One'}}>
+                                        🍃 {t.welcome}
+                                    </h1>
+                                    <div className="flex items-center space-x-4">
+                                        <LanguageSelector 
+                                            currentLang={language} 
+                                            onLanguageChange={setLanguage}
+                                            t={t}
+                                        />
+                                        <button 
+                                            onClick={() => setCurrentView('teacher')}
+                                            className="bg-white/90 text-gray-700 px-4 py-2 rounded-lg font-bold hover:bg-white transition-colors"
+                                        >
+                                            {t.teacherDashboard}
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                    {/* Left Column */}
+                                    <div className="space-y-6">
+                                        <ProfileCard student={studentData} t={t} />
+                                        <TodaysTask t={t} onTaskStart={handleTaskStart} />
+                                        <BadgeGrid badges={studentData.badges} t={t} />
+                                    </div>
+                                    
+                                    {/* Middle Column */}
+                                    <div className="space-y-6">
+                                        <div className="game-card rounded-2xl p-6">
+                                            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                                                <span className="mr-2">🎯</span>
+                                                {t.challenges}
+                                            </h3>
+                                            <div className="space-y-4">
+                                                {mockChallenges.map(challenge => (
+                                                    <ChallengeCard 
+                                                        key={challenge.id} 
+                                                        challenge={challenge} 
+                                                        t={t}
+                                                        onUploadProof={handleUploadProof}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+                                        
+                                        <MiniGames t={t} onGamePlay={handleGamePlay} />
+                                    </div>
+                                    
+                                    {/* Right Column */}
+                                    <div className="space-y-6">
+                                        <Leaderboard 
+                                            leaderboard={mockLeaderboard} 
+                                            t={t} 
+                                            currentUser={studentData.name}
+                                        />
+                                        
+                                        {/* Environmental Impact */}
+                                        <div className="game-card rounded-2xl p-6">
+                                            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                                                <span className="mr-2">🌍</span>
+                                                {t.reports}
+                                            </h3>
+                                            <div className="space-y-4">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-gray-600">🌳 Trees Planted</span>
+                                                    <span className="font-bold text-green-600">{studentData.ecoImpact.treesPlanted}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-gray-600">♻️ Waste Reduced</span>
+                                                    <span className="font-bold text-blue-600">{studentData.ecoImpact.wasteReduced} kg</span>
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-gray-600">💧 Water Saved</span>
+                                                    <span className="font-bold text-cyan-600">{studentData.ecoImpact.waterSaved} L</span>
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-gray-600">🌿 CO₂ Offset</span>
+                                                    <span className="font-bold text-green-600">{studentData.ecoImpact.co2Offset} kg</span>
+                                                </div>
+                                                <button className="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-3 rounded-lg font-bold hover:scale-105 transform transition-all">
+                                                    Download Certificate 📜
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <TeacherDashboard 
+                            t={t} 
+                            onSwitchToStudent={() => setCurrentView('student')}
+                        />
+                    )}
+                </div>
+            );
+        };
+        
+        ReactDOM.render(<EcoVatorsApp />, document.getElementById('root'));
+    </script>
+</body>
+</html>
